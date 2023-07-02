@@ -69,12 +69,42 @@ const App = () => {
       restoreLocation(); // Restore the original location here
     } else {
       if (Platform.OS === 'android') {
-        requestLocationPermissionAndroid();
+        requestLocationPermissionAndroid().then((result) => {
+          if (result === RESULTS.GRANTED) {
+            getCurrentLocation();
+          } else {
+            Alert.alert('Location permission denied. Please enable location permissions in settings.');
+          }
+        });
       } else if (Platform.OS === 'ios') {
-        requestLocationPermissionIOS();
+        getCurrentLocation();
+      }
+      
+      // Set the latitude and longitude based on the entered address
+      if (address) {
+        let geocodingUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+          address
+        )}&key=AIzaSyCQAHvArVBuYhlopwlU5fDDXPI0TNdYGrw`;
+  
+        fetch(geocodingUrl)
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.results.length > 0) {
+              const { lat, lng } = data.results[0].geometry.location;
+              setLatitude(lat);
+              setLongitude(lng);
+              spoofLocation(lat, lng); // Spoof the location here
+            } else {
+              Alert.alert('Unable to get precise location for the selected address.');
+            }
+          })
+          .catch((error) => {
+            console.error('Error:', error);
+          });
       }
     }
   };
+  
 
   const requestLocationPermissionAndroid = async () => {
     const result = await request(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION);
@@ -92,6 +122,7 @@ const App = () => {
       timeout: 15000,
     })
       .then((location) => {
+        console.log('Location:', location); 
         const { latitude, longitude } = location;
         setLatitude(latitude);
         setLongitude(longitude);
@@ -101,6 +132,7 @@ const App = () => {
         console.error('Error:', error);
       });
   };
+  
 
   useEffect(() => {
     // Check and request location permissions on app startup
