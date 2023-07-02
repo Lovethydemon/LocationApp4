@@ -124,10 +124,10 @@ const App = () => {
   const spoofLocation = (lat, lng) => {
     // Implement location spoofing here based on the lat and lng
     if (Platform.OS === 'android') {
-      // Enable mock location mode and set the spoofed location
+      // TODO: Implement location spoofing for Android
       // You will need appropriate permissions to do this
     } else if (Platform.OS === 'ios') {
-      // Implement location spoofing for iOS
+      // TODO: Implement location spoofing for iOS
       // This might involve injecting location data into specific APIs or system components
     }
   };
