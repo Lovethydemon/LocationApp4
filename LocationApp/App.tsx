@@ -3,6 +3,8 @@ import { View, Text, TextInput, Switch, Button, Platform, Alert } from 'react-na
 import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import Geolocation from 'react-native-get-location';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+import { LocationError } from 'react-native-get-location';
+
 
 const App = () => {
   const [address, setAddress] = useState('');
@@ -11,6 +13,8 @@ const App = () => {
   const [longitude, setLongitude] = useState(null);
   const [useCustomLocation, setUseCustomLocation] = useState(false);
   const [permissionGranted, setPermissionGranted] = useState(false);
+  const [DEFAULT_LATITUDE, setDefaultLatitude] = useState(null);
+  const [DEFAULT_LONGITUDE, setDefaultLongitude] = useState(null);
 
   const toggleSwitch = () => {
     setUseCustomLocation((prevValue) => !prevValue);
@@ -129,7 +133,17 @@ const App = () => {
         spoofLocation(latitude, longitude); // Spoof the location here
       })
       .catch((error) => {
-        console.error('Error:', error);
+        if (error instanceof LocationError) {
+          if (error.code === LocationError.TIMEOUT) {
+            console.error('Location request timed out');
+          } else if (error.code === LocationError.CANCELLED) {
+            console.error('Location request cancelled by another request');
+          } else {
+            console.error('Location request failed with error:', error.message);
+          }
+        } else {
+          console.error('Error:', error);
+        }
       });
   };
   
@@ -147,13 +161,33 @@ const App = () => {
 
       if (permissionStatus === RESULTS.GRANTED) {
         setPermissionGranted(true);
+        // Get the current location and set it as the default
+        Geolocation.getCurrentPosition({
+          enableHighAccuracy: true,
+          timeout: 15000,
+        })
+          .then((location) => {
+            const { latitude, longitude } = location.coords;
+            setDefaultLatitude(latitude);
+            setDefaultLongitude(longitude);
+          })
+          .catch((error) => {
+            console.error('Error:', error);
+          });
       }
     };
 
     checkLocationPermission();
   }, []);
 
+
   const spoofLocation = (lat, lng) => {
+    if (DEFAULT_LATITUDE && DEFAULT_LONGITUDE) {
+      // Use the DEFAULT_LATITUDE and DEFAULT_LONGITUDE when spoofing the location
+      lat = DEFAULT_LATITUDE;
+      lng = DEFAULT_LONGITUDE;
+    }
+
     // Implement location spoofing here based on the lat and lng
     if (Platform.OS === 'android') {
       // TODO: Implement location spoofing for Android
@@ -165,6 +199,12 @@ const App = () => {
   };
 
   const restoreLocation = () => {
+    if (DEFAULT_LATITUDE && DEFAULT_LONGITUDE) {
+      // Restore the DEFAULT_LATITUDE and DEFAULT_LONGITUDE when restoring the original location
+      setLatitude(DEFAULT_LATITUDE);
+      setLongitude(DEFAULT_LONGITUDE);
+    }
+
     // Implement restoring the original location
     if (Platform.OS === 'android') {
       // Disable mock location mode
@@ -174,7 +214,6 @@ const App = () => {
       // This might involve reverting any changes made to location data APIs or system components
     }
   };
-
   const handleShowLocation = () => {
     if (latitude !== null && longitude !== null) {
       Alert.alert(`Latitude: ${latitude}, Longitude: ${longitude}`);
@@ -250,6 +289,12 @@ const App = () => {
       {latitude !== null && longitude !== null && (
         <Text style={{ marginTop: 20 }}>
           Latitude: {latitude}, Longitude: {longitude}
+        </Text>
+      )}
+
+      {latitude !== null && longitude !== null && (
+        <Text style={{ marginBottom: 20 }}>
+          Current Location: {latitude}, {longitude}
         </Text>
       )}
     </View>
