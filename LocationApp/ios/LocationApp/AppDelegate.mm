@@ -1,6 +1,11 @@
 #import "AppDelegate.h"
 #import <React/RCTBundleURLProvider.h>
-#import <GoogleMaps/GoogleMaps.h> // Add this line
+#import <GoogleMaps/GoogleMaps.h>
+#import <React/RCTLinkingManager.h>
+#import <React/RCTBridge.h>
+#import <React/RCTRootView.h>
+#import <React/RCTBundleURLProvider.h>
+#import <CoreLocation/CoreLocation.h> // Import the CoreLocation framework
 
 @implementation AppDelegate
 
@@ -13,6 +18,11 @@
 
   // Add the following lines with your Google Maps API key
   [GMSServices provideAPIKey:@"AIzaSyCQAHvArVBuYhlopwlU5fDDXPI0TNdYGrw"];
+  
+  // Request location permission
+  if ([CLLocationManager locationServicesEnabled]) {
+    [CLLocationManager requestWhenInUseAuthorization];
+  }
   
   return [super application:application didFinishLaunchingWithOptions:launchOptions];
 }

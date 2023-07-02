@@ -4,6 +4,8 @@ import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import Geolocation from 'react-native-get-location';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { LocationError } from 'react-native-get-location';
+import AndroidOpenSettings from 'react-native-android-open-settings';
+
 
 const App = () => {
   const [address, setAddress] = useState('');
@@ -29,8 +31,10 @@ const App = () => {
 
     if (Platform.OS === 'android') {
       permissionStatus = await requestLocationPermissionAndroid();
+      requestOverlayPermissionAndroid();
     } else if (Platform.OS === 'ios') {
       permissionStatus = await requestLocationPermissionIOS();
+      requestOverlayPermissionIOS();
     }
 
     if (permissionStatus === RESULTS.GRANTED || !useCustomLocation) {
@@ -72,15 +76,25 @@ const App = () => {
       restoreLocation(); // Restore the original location here
     } else {
       if (Platform.OS === 'android') {
+        cancelLocationRequestAndroid();
         requestLocationPermissionAndroid().then((result) => {
           if (result === RESULTS.GRANTED) {
             getCurrentLocation();
+            requestOverlayPermissionAndroid();
           } else {
             Alert.alert('Location permission denied. Please enable location permissions in settings.');
           }
         });
       } else if (Platform.OS === 'ios') {
-        getCurrentLocation();
+        cancelLocationRequest();
+        requestLocationPermissionIOS().then((result) => {
+          if (result === RESULTS.GRANTED) {
+            getCurrentLocation();
+            requestOverlayPermissionIOS();
+          } else {
+            Alert.alert('Location permission denied. Please enable location permissions in settings.');
+          }
+        });
       }
 
       // Set the latitude and longitude based on the entered address
@@ -118,15 +132,45 @@ const App = () => {
     return result;
   };
 
+  const requestOverlayPermissionAndroid = async () => {
+    // Request overlay permission for Android
+    // This will allow your app to show things on top of other apps
+    
+    // Open the overlay settings page using `AndroidOpenSettings`
+    AndroidOpenSettings.appOverlaySettings();
+    
+    // After the user grants or denies permission, you can check the result
+    // using the `AndroidOpenSettings.canDrawOverlays()` method to verify the permission status
+  };
+  
+  
+  const requestOverlayPermissionIOS = async () => {
+    // Request overlay permission for iOS
+    // This will allow your app to show things on top of other apps
+  
+    // For iOS, you can use the `react-native-permissions` package to request the overlay permission
+    // Here's an example using the `request` method from `react-native-permissions`:
+    const { request } = require('react-native-permissions');
+  
+    // Request the overlay permission
+    const result = await request('ios.permission.PRESENTATION_EXTENSION');
+  
+    // Check the permission result
+    if (result === 'granted') {
+      // Permission granted
+      console.log('Overlay permission granted for iOS');
+    } else {
+      // Permission denied
+      console.log('Overlay permission denied for iOS');
+    }
+  };
+  
   const getCurrentLocation = () => {
     Geolocation.getCurrentPosition({
       enableHighAccuracy: true,
       timeout: 80000,
-    
-
     })
       .then((location) => {
-        console.log('Location:', location);
         const { latitude, longitude } = location;
         setLatitude(latitude);
         setLongitude(longitude);
@@ -145,6 +189,14 @@ const App = () => {
           console.error('Error:', error);
         }
       });
+  };
+
+  const cancelLocationRequest = () => {
+    // TODO: Implement cancelling location request for iOS if needed
+  };
+
+  const cancelLocationRequestAndroid = () => {
+    // TODO: Implement cancelling location request for Android if needed
   };
 
   useEffect(() => {
