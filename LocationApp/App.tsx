@@ -5,7 +5,6 @@ import Geolocation from 'react-native-get-location';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { LocationError } from 'react-native-get-location';
 
-
 const App = () => {
   const [address, setAddress] = useState('');
   const [zipcode, setZipcode] = useState('');
@@ -83,13 +82,13 @@ const App = () => {
       } else if (Platform.OS === 'ios') {
         getCurrentLocation();
       }
-      
+
       // Set the latitude and longitude based on the entered address
       if (address) {
         let geocodingUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
           address
         )}&key=AIzaSyCQAHvArVBuYhlopwlU5fDDXPI0TNdYGrw`;
-  
+
         fetch(geocodingUrl)
           .then((response) => response.json())
           .then((data) => {
@@ -108,7 +107,6 @@ const App = () => {
       }
     }
   };
-  
 
   const requestLocationPermissionAndroid = async () => {
     const result = await request(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION);
@@ -123,10 +121,12 @@ const App = () => {
   const getCurrentLocation = () => {
     Geolocation.getCurrentPosition({
       enableHighAccuracy: true,
-      timeout: 15000,
+      timeout: 80000,
+    
+
     })
       .then((location) => {
-        console.log('Location:', location); 
+        console.log('Location:', location);
         const { latitude, longitude } = location;
         setLatitude(latitude);
         setLongitude(longitude);
@@ -146,7 +146,6 @@ const App = () => {
         }
       });
   };
-  
 
   useEffect(() => {
     // Check and request location permissions on app startup
@@ -180,40 +179,30 @@ const App = () => {
     checkLocationPermission();
   }, []);
 
-
   const spoofLocation = (lat, lng) => {
-    if (DEFAULT_LATITUDE && DEFAULT_LONGITUDE) {
-      // Use the DEFAULT_LATITUDE and DEFAULT_LONGITUDE when spoofing the location
-      lat = DEFAULT_LATITUDE;
-      lng = DEFAULT_LONGITUDE;
-    }
-
     // Implement location spoofing here based on the lat and lng
     if (Platform.OS === 'android') {
       // TODO: Implement location spoofing for Android
       // You will need appropriate permissions to do this
+      // Use the lat and lng to set mock location for Android
     } else if (Platform.OS === 'ios') {
       // TODO: Implement location spoofing for iOS
       // This might involve injecting location data into specific APIs or system components
+      // Use the lat and lng to set location for iOS
     }
   };
 
   const restoreLocation = () => {
-    if (DEFAULT_LATITUDE && DEFAULT_LONGITUDE) {
-      // Restore the DEFAULT_LATITUDE and DEFAULT_LONGITUDE when restoring the original location
-      setLatitude(DEFAULT_LATITUDE);
-      setLongitude(DEFAULT_LONGITUDE);
-    }
-
     // Implement restoring the original location
     if (Platform.OS === 'android') {
-      // Disable mock location mode
+      // TODO: Disable mock location mode for Android
       // You will need appropriate permissions to do this
     } else if (Platform.OS === 'ios') {
-      // Implement restoring the original location for iOS
+      // TODO: Implement restoring the original location for iOS
       // This might involve reverting any changes made to location data APIs or system components
     }
   };
+
   const handleShowLocation = () => {
     if (latitude !== null && longitude !== null) {
       Alert.alert(`Latitude: ${latitude}, Longitude: ${longitude}`);
